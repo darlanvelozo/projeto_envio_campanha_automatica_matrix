@@ -1,0 +1,258 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Cliente | {{ cliente.nome_razaosocial }}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/jquery.json-viewer@1.4.0/json-viewer/jquery.json-viewer.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg-color: rgba(22, 27, 34, 0.75);
+            --border-color: rgba(139, 148, 158, 0.3);
+            --primary-accent-color: #33a0ff;
+            --text-color: #c9d1d9;
+            --text-secondary-color: #8b949e;
+            --success-color: #28a745;
+            --error-color: #f85149;
+            --border-radius: 8px;
+            --font-primary: 'Poppins', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-primary); background-color: var(--bg-color); color: var(--text-color); padding: 20px; background-image: linear-gradient(rgba(139, 148, 158, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 148, 158, 0.1) 1px, transparent 1px); background-size: 40px 40px; }
+        .card { background: var(--card-bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); padding: 30px; }
+        .page-container { width: 100%; max-width: 1400px; margin: 0 auto; animation: fadeIn 0.8s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .page-header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .page-header h1 { font-size: 2rem; font-weight: 600; color: #fff; }
+        .page-grid { display: grid; grid-template-columns: 350px 1fr; gap: 25px; }
+        @media (max-width: 992px) { .page-grid { grid-template-columns: 1fr; } }
+        .client-summary-card h2 { font-size: 1.3rem; color: #fff; padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; }
+        .info-item { margin-bottom: 15px; }
+        .info-item .label { font-size: 0.9rem; color: var(--text-secondary-color); margin-bottom: 4px; }
+        .info-item .value { font-weight: 500; color: var(--text-color); word-wrap: break-word; }
+        .history-list h2 { font-size: 1.3rem; margin-bottom: 20px; color: #fff; display: flex; align-items: center; gap:10px;}
+        .history-item { background-color: rgba(255, 255, 255, 0.03); border-radius: var(--border-radius); margin-bottom: 15px; border-left: 4px solid var(--border-color); }
+        .history-item[open] { border-left-color: var(--primary-accent-color); }
+        .history-item[open] summary { border-bottom: 1px solid var(--border-color); }
+        .history-item summary { display: flex; justify-content: space-between; align-items: center; padding: 20px; cursor: pointer; list-style: none; }
+        .history-item summary::-webkit-details-marker { display: none; }
+        .summary-title { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; color: #fff; }
+        .summary-title .main-title { font-weight: 500; }
+        .summary-title .sub-title { font-size: 0.85rem; color: var(--text-secondary-color); }
+        .summary-status .icon { width: 20px; height: 20px; }
+        .summary-status .icon-success { color: var(--success-color); }
+        .summary-status .icon-error { color: var(--error-color); }
+        .details-content { padding: 20px; }
+        .details-content h4 { font-size: 1rem; color: var(--text-secondary-color); margin-bottom: 15px; display: flex; align-items:center; gap:8px;}
+        .json-viewer-container { border-radius: var(--border-radius); margin-bottom: 20px; background-color: rgba(0,0,0,0.3); padding: 15px; }
+        pre.json-viewer { font-family: var(--font-mono) !important; background-color: transparent !important; color: var(--text-color) !important; font-size: 14px; }
+        .json-viewer a.json-toggle { color: #8b949e !important; }
+        .json-viewer .json-string { color: #a5d6ff !important; }
+        .json-viewer .json-number { color: #79c0ff !important; }
+        .json-viewer .json-boolean { color: #ffab70 !important; }
+        .json-viewer .json-null { color: #ff7b72 !important; }
+        .json-viewer .json-key { color: #d2a8ff !important; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="page-header">
+            <h1><i data-feather="user"></i> {{ cliente.nome_razaosocial }}</h1>
+            <a href="{{ request.META.HTTP_REFERER|default:'/campanhas/execucoes/' }}" style="color: var(--text-secondary-color); text-decoration: none; display:flex; align-items:center; gap: 8px;">
+                <i data-feather="arrow-left"></i> Voltar
+            </a>
+        </div>
+
+        <div class="page-grid">
+            <aside class="client-summary-card card">
+                <section>
+                    <h2><i data-feather="file-text"></i> Informações Básicas</h2>
+                    <div class="info-item"><div class="label">Código</div><div class="value">{{ cliente.codigo_cliente }}</div></div>
+                    <div class="info-item"><div class="label">Telefone</div><div class="value">{{ cliente.telefone_corrigido|default:"Não informado" }}</div></div>
+                    <div class="info-item"><div class="label">Data de Criação</div><div class="value">{{ cliente.data_criacao|date:"d/m/Y H:i" }}</div></div>
+                    <div class="info-item"><div class="label">Última Atualização</div><div class="value">{{ cliente.data_atualizacao|date:"d/m/Y H:i" }}</div></div>
+                </section>
+                <section style="margin-top: 30px;">
+                    <h2><i data-feather="credit-card"></i> Dados da Última Fatura</h2>
+                    <div class="info-item"><div class="label">ID da Fatura</div><div class="value">{{ cliente.id_fatura|default:"N/A" }}</div></div>
+                    <div class="info-item"><div class="label">Vencimento</div><div class="value">{{ cliente.vencimento_fatura|date:"d/m/Y"|default:"N/A" }}</div></div>
+                    <div class="info-item"><div class="label">Valor</div><div class="value">R$ {{ cliente.valor_fatura|default:"0,00" }}</div></div>
+                    <div class="info-item"><div class="label">PIX Copia e Cola</div><div class="value">{{ cliente.pix|default:"N/A" }}</div></div>
+                    <div class="info-item"><div class="label">Código de Barras</div><div class="value">{{ cliente.codigo_barras|default:"N/A" }}</div></div>
+                    <div class="info-item"><div class="label">Link do Boleto</div><div class="value"><a href="{{ cliente.link_boleto }}" target="_blank" style="color:var(--primary-accent-color)">{{ cliente.link_boleto|default:"N/A" }}</a></div></div>
+                </section>
+            </aside>
+
+            <main class="history-list">
+                <h2><i data-feather="activity"></i> Histórico de Consultas</h2>
+                
+                <div class="section">
+                    <h2>Histórico de Consultas</h2>
+                    {% for consulta in consultas %}
+                    <div class="consulta">
+                        <h3>Consulta em {{ consulta.data_consulta|date:"d/m/Y H:i:s" }}</h3>
+                        
+                        <h4>Execução:</h4>
+                        <pre>
+Título: {{ consulta.execucao.titulo }}
+Status: {{ consulta.execucao.get_status_display }}
+Data: {{ consulta.execucao.data_inicio|date:"d/m/Y H:i:s" }}
+                        </pre>
+
+                        <h4>Dados do Cliente na Consulta:</h4>
+                        <pre>
+Código: {{ consulta.cliente.codigo_cliente }}
+Nome/Razão Social: {{ consulta.cliente.nome_razaosocial }}
+Telefone: {{ consulta.cliente.telefone_corrigido|default:"Não informado" }}
+ID da Fatura: {{ consulta.cliente.id_fatura|default:"Não informado" }}
+Vencimento: {{ consulta.cliente.vencimento_fatura|date:"d/m/Y"|default:"Não informado" }}
+Valor: R$ {{ consulta.cliente.valor_fatura|default:"0.00" }}
+PIX: {{ consulta.cliente.pix|default:"Não informado" }}
+Código de Barras: {{ consulta.cliente.codigo_barras|default:"Não informado" }}
+Link do Boleto: {{ consulta.cliente.link_boleto|default:"Não informado" }}
+                        </pre>
+                        
+                        <div class="json-section">
+                            <h4>
+                                <button class="toggle-button" onclick="toggleJson('sql-{{ forloop.counter }}')">
+                                    <i data-feather="chevron-right" class="toggle-icon"></i>
+                                    Dados Originais SQL
+                                </button>
+                            </h4>
+                            <div id="sql-{{ forloop.counter }}" class="json-content" style="display: none;">
+                                <pre>{{ consulta.dados_originais_sql|pprint }}</pre>
+                            </div>
+                        </div>
+                        
+                        <div class="json-section">
+                            <h4>
+                                <button class="toggle-button" onclick="toggleJson('api-{{ forloop.counter }}')">
+                                    <i data-feather="chevron-right" class="toggle-icon"></i>
+                                    Resposta da API
+                                </button>
+                            </h4>
+                            <div id="api-{{ forloop.counter }}" class="json-content" style="display: none;">
+                                <pre>{{ consulta.dados_api_response|pprint }}</pre>
+                            </div>
+                        </div>
+                        
+                        <h4>Status:</h4>
+                        <p>{% if consulta.sucesso_api %}✅ Sucesso{% else %}❌ Erro{% endif %}</p>
+                        
+                        {% if consulta.erro_api %}
+                        <div class="json-section">
+                            <h4>
+                                <button class="toggle-button" onclick="toggleJson('erro-{{ forloop.counter }}')">
+                                    <i data-feather="chevron-right" class="toggle-icon"></i>
+                                    Erro
+                                </button>
+                            </h4>
+                            <div id="erro-{{ forloop.counter }}" class="json-content" style="display: none;">
+                                <pre>{{ consulta.erro_api }}</pre>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <hr>
+                    </div>
+                    {% empty %}
+                    <p>Nenhuma consulta registrada para este cliente.</p>
+                    {% endfor %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery.json-viewer@1.4.0/json-viewer/jquery.json-viewer.js"></script>
+<script>
+    // Inicializa os ícones do Feather
+    feather.replace();
+
+    /**
+     * Função auxiliar para renderizar o JSON ou uma mensagem de fallback.
+     * @param {jQuery} container - O elemento jQuery onde o viewer será inserido.
+     * @param {string|null} jsonDataString - O conteúdo de texto da tag <script> com os dados.
+     */
+    function renderJsonViewer(container, jsonDataString) {
+        // 1. Verifica se a string de dados é nula ou vazia.
+        if (!jsonDataString || jsonDataString.trim() === 'null' || jsonDataString.trim() === '') {
+            container.html('<p style="color: var(--text-secondary-color);">Nenhum dado registrado.</p>');
+            return;
+        }
+
+        try {
+            // 2. Tenta fazer o parse do JSON.
+            let data = JSON.parse(jsonDataString);
+
+            // 3. MUDANÇA CRUCIAL: Se o resultado do parse for uma string, 
+            //    significa que o JSON estava "duplamente encodado". Tentamos o parse novamente.
+            if (typeof data === 'string') {
+                data = JSON.parse(data);
+            }
+            
+            // 4. Verifica se o resultado é um objeto vazio.
+            if (typeof data === 'object' && data !== null && Object.keys(data).length === 0) {
+                 container.html('<p style="color: var(--text-secondary-color);">Dados vazios (objeto vazio {}).</p>');
+                 return;
+            }
+
+            // 5. Se tudo deu certo, renderiza o JSON.
+            container.jsonViewer(data, { collapsed: true, withQuotes: true });
+
+        } catch (e) {
+            // 6. Se qualquer um dos parses falhar, mostra uma mensagem de erro.
+            console.error("Erro ao processar JSON:", e);
+            console.error("Dados que causaram o erro:", jsonDataString);
+            container.html('<p style="color: var(--error-color);">Falha ao ler os dados JSON. Verifique o console para mais detalhes.</p>');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Itera sobre cada item do histórico que possui dados
+        document.querySelectorAll('.history-item').forEach(item => {
+            const id = item.dataset.id;
+            
+            // Pega os IDs dos scripts que contêm os dados JSON
+            const sqlDataId = 'json-data-sql-' + id;
+            const apiDataId = 'json-data-api-' + id;
+            
+            // Pega os divs onde o JSON será renderizado
+            const sqlContainer = $('#json-sql-' + id);
+            const apiContainer = $('#json-api-' + id);
+            
+            // Pega os elementos de script
+            const sqlDataElement = document.getElementById(sqlDataId);
+            const apiDataElement = document.getElementById(apiDataId);
+
+            // Chama a função robusta para renderizar cada JSON
+            renderJsonViewer(sqlContainer, sqlDataElement ? sqlDataElement.textContent : null);
+            renderJsonViewer(apiContainer, apiDataElement ? apiDataElement.textContent : null);
+        });
+    });
+
+    function toggleJson(id) {
+        const content = document.getElementById(id);
+        const button = content.previousElementSibling.querySelector('.toggle-button');
+        const icon = button.querySelector('.toggle-icon');
+        
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            button.classList.add('active');
+        } else {
+            content.style.display = 'none';
+            button.classList.remove('active');
+        }
+    }
+</script>
+</body>
+</html>

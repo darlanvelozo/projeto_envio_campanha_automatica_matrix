@@ -1,0 +1,280 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Execuções</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+
+    <style>
+        /*-------------------------------------------*/
+        /* 1. ESTILOS BASE (COPIADOS PARA CONSISTÊNCIA) */
+        /*-------------------------------------------*/
+        :root {
+            --bg-color: #0d1117;
+            --card-bg-color: rgba(22, 27, 34, 0.75);
+            --border-color: rgba(139, 148, 158, 0.3);
+            --primary-accent-color: #33a0ff;
+            --primary-glow-color: rgba(51, 160, 255, 0.5);
+            --success-color: #28a745;
+            --error-color: #f85149;
+            --warning-color: #ffab00;
+            --text-color: #c9d1d9;
+            --text-secondary-color: #8b949e;
+            --border-radius: 8px;
+            --font-primary: 'Poppins', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-primary);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            background-image: 
+                linear-gradient(rgba(139, 148, 158, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 148, 158, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        
+        /*-------------------------------------------*/
+        /* 2. LAYOUT E CABEÇALHO DA PÁGINA           */
+        /*-------------------------------------------*/
+        .page-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card {
+            background: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .action-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            text-decoration: none;
+            color: #fff;
+            background: var(--primary-accent-color);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .action-button:hover { transform: translateY(-2px); box-shadow: 0 0 15px var(--primary-glow-color); }
+
+        /*-------------------------------------------*/
+        /* 3. ESTILO DA LISTA DE EXECUÇÕES           */
+        /*-------------------------------------------*/
+        .execution-list .execution-item {
+            display: block; /* Para o <a> funcionar como bloco */
+            text-decoration: none;
+            color: var(--text-color);
+            background-color: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+            border-left: 4px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        .execution-list .execution-item:hover {
+            transform: translateX(5px);
+            background-color: rgba(255, 255, 255, 0.07);
+            border-left-color: var(--primary-accent-color);
+        }
+        
+        .execution-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .execution-main-info { flex: 1 1 50%; min-width: 300px; }
+        .execution-main-info h3 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .execution-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+        }
+        .execution-meta span { display: inline-flex; align-items: center; gap: 6px; }
+
+        .execution-stats {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 0 0 auto;
+        }
+        
+        /* Badges de Status (reutilizados) */
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .status-pendente { background: var(--warning-color); color: #000; }
+        .status-executando { background: var(--primary-accent-color); color: #fff; }
+        .status-concluida { background: var(--success-color); color: #fff; }
+        .status-erro { background: var(--error-color); color: #fff; }
+        .status-cancelada { background: var(--error-color); color: #fff; }
+        /*-------------------------------------------*/
+        /* 4. PAGINAÇÃO E ESTADO VAZIO               */
+        /*-------------------------------------------*/
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 30px;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 15px;
+            text-decoration: none;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-secondary-color);
+            transition: all 0.2s ease;
+        }
+        .pagination a:hover { background-color: var(--primary-accent-color); color: #fff; border-color: var(--primary-accent-color); }
+        .pagination .current { background-color: var(--primary-accent-color); color: #fff; border-color: var(--primary-accent-color); font-weight: 600; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary-color);
+        }
+        .empty-state .icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 20px;
+        }
+        .empty-state p {
+            font-size: 1.2rem;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+    <div class="page-header">
+        <h1>
+            <i data-feather="list"></i>
+            <span>Histórico de Execuções</span>
+        </h1>
+        <a href="{% url 'pagina_processar_consulta' %}" class="action-button">
+            <i data-feather="plus"></i>
+            Nova Execução
+        </a>
+    </div>
+
+    <div class="card execution-list">
+        {% for execucao in page_obj %}
+            <a href="{% url 'detalhe_execucao' execucao.id %}" class="execution-item">
+                <div class="execution-content">
+                    <div class="execution-main-info">
+                        <h3>
+                            <i data-feather="terminal" style="width:20px;"></i>
+                            {{ execucao.titulo }}
+                        </h3>
+                        <div class="execution-meta">
+                            <span><i data-feather="file-text" style="width:14px;"></i> {{ execucao.template_sql.titulo }}</span>
+                            <span><i data-feather="calendar" style="width:14px;"></i> {{ execucao.data_inicio|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    </div>
+                    <div class="execution-stats">
+                        <span class="status-badge status-{{ execucao.status }}">{{ execucao.get_status_display }}</span>
+                        <i data-feather="chevron-right" style="color: var(--primary-accent-color);"></i>
+                    </div>
+                </div>
+            </a>
+        {% empty %}
+            <div class="empty-state">
+                <i data-feather="folder-minus" class="icon"></i>
+                <p>Nenhuma execução encontrada.</p>
+                <small>Clique em "Nova Execução" para começar.</small>
+            </div>
+        {% endfor %}
+
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}"><i data-feather="arrow-left"></i></a>
+            {% else %}
+                <span style="opacity: 0.3;"><i data-feather="arrow-left"></i></span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="current">{{ num }}</span>
+                {% else %}
+                    <a href="?page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}"><i data-feather="arrow-right"></i></a>
+            {% else %}
+                 <span style="opacity: 0.3;"><i data-feather="arrow-right"></i></span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Inicializa os ícones do Feather
+    feather.replace();
+</script>
+
+</body>
+</html>

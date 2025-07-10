@@ -1,0 +1,396 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Processamento de Consultas</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <style>
+        /*-------------------------------------------*/
+        /* 1. VARIÁVEIS DE DESIGN E RESET GERAL      */
+        /*-------------------------------------------*/
+        :root {
+            --bg-color: #0d1117; /* Fundo principal (quase preto) */
+            --card-bg-color: rgba(22, 27, 34, 0.75); /* Fundo do card (semi-transparente) */
+            --border-color: rgba(139, 148, 158, 0.3);
+            --primary-accent-color: #33a0ff; /* Azul vibrante */
+            --primary-glow-color: rgba(51, 160, 255, 0.5);
+            --text-color: #c9d1d9; /* Cinza claro para textos */
+            --text-secondary-color: #8b949e;
+            --success-color: #28a745;
+            --error-color: #f85149;
+            --border-radius: 8px;
+            --font-primary: 'Poppins', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            /* Efeito de grade sutil no fundo */
+            background-image: 
+                linear-gradient(rgba(139, 148, 158, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 148, 158, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: -1px -1px;
+        }
+        
+        /*-------------------------------------------*/
+        /* 2. O CARD PRINCIPAL E LAYOUT              */
+        /*-------------------------------------------*/
+        .form-container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 40px;
+            /* Efeito "Frosted Glass" (Glassmorphism) */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .form-header h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .form-header .icon {
+            color: var(--primary-accent-color);
+        }
+
+        /*-------------------------------------------*/
+        /* 3. ESTILOS DOS CAMPOS DO FORMULÁRIO       */
+        /*-------------------------------------------*/
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: var(--text-secondary-color);
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper .icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary-color);
+            transition: color 0.3s ease;
+        }
+        
+        .form-control {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 14px 14px 14px 50px; /* Espaço para o ícone */
+            color: var(--text-color);
+            font-family: var(--font-primary);
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-accent-color);
+            box-shadow: 0 0 15px var(--primary-glow-color);
+        }
+        
+        .form-control:focus + .icon {
+            color: var(--primary-accent-color);
+        }
+
+        /*-------------------------------------------*/
+        /* 4. ESTILIZAÇÃO CUSTOMIZADA DO SELECT2     */
+        /*-------------------------------------------*/
+        .select2-container--default .select2-selection--single {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            height: 52px; /* Mesma altura do input */
+            padding: 12px 12px 12px 30px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: var(--text-color);
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: var(--text-secondary-color) transparent transparent transparent;
+        }
+        .select2-container--open .select2-selection--single {
+            border-color: var(--primary-accent-color);
+            box-shadow: 0 0 15px var(--primary-glow-color);
+        }
+        .select2-dropdown {
+            background-color: var(--bg-color);
+            border: 1px solid var(--primary-accent-color);
+            border-radius: var(--border-radius);
+            color: var(--text-color);
+        }
+        .select2-search__field {
+            background-color: transparent !important;
+            color: var(--text-color);
+        }
+        .select2-results__option--highlighted {
+            background-color: var(--primary-accent-color) !important;
+        }
+        
+        /*-------------------------------------------*/
+        /* 5. BOTÃO DE ENVIO E SPINNER               */
+        /*-------------------------------------------*/
+        .btn-submit {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 15px;
+            font-family: var(--font-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            background: var(--primary-accent-color);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px var(--primary-glow-color);
+        }
+        .btn-submit:disabled {
+            background-color: var(--text-secondary-color);
+            cursor: not-allowed;
+        }
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /*-------------------------------------------*/
+        /* 6. ALERTAS E RESPONSIVIDADE               */
+        /*-------------------------------------------*/
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+            border: 1px solid transparent;
+            display: none;
+        }
+        .alert-success { background-color: rgba(40, 167, 69, 0.2); border-color: var(--success-color); color: var(--success-color); }
+        .alert-error { background-color: rgba(248, 81, 73, 0.2); border-color: var(--error-color); color: var(--error-color); }
+
+        @media (max-width: 768px) {
+            body { align-items: flex-start; padding: 10px; }
+            .form-container { padding: 25px; }
+            .form-header h2 { font-size: 1.5rem; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <div class="form-header">
+            <i data-feather="terminal" class="icon" style="width:32px; height:32px;"></i>
+            <h2>Processador de Consultas</h2>
+        </div>
+
+        <div id="alert-container">
+            <div id="alert-message" class="alert"></div>
+        </div>
+
+        <form id="process-form" method="post" action="{% url 'iniciar_processamento' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="titulo">Título da Execução</label>
+                <div class="input-wrapper">
+                    <input type="text" id="titulo" name="titulo" class="form-control" required placeholder="Ex: Relatório Mensal de Clientes">
+                    <i data-feather="edit-3" class="icon"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="template_sql">Template SQL</label>
+                <div class="input-wrapper">
+                    <select id="template_sql" name="template_sql" class="form-control select2" required>
+                        <option></option> {% for template in templates %}
+                        <option value="{{ template.id }}">{{ template.titulo }}</option>
+                        {% endfor %}
+                    </select>
+                    <i data-feather="file-text" class="icon"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="credencial_hubsoft">Credencial Hubsoft</label>
+                 <div class="input-wrapper">
+                    <select id="credencial_hubsoft" name="credencial_hubsoft" class="form-control select2" required>
+                        <option></option>
+                        {% for credencial in credenciais_hubsoft %}
+                        <option value="{{ credencial.id }}">{{ credencial.titulo }}</option>
+                        {% endfor %}
+                    </select>
+                    <i data-feather="cloud" class="icon"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="credencial_banco">Credencial Banco de Dados</label>
+                <div class="input-wrapper">
+                    <select id="credencial_banco" name="credencial_banco" class="form-control select2" required>
+                        <option></option>
+                        {% for credencial in credenciais_banco %}
+                        <option value="{{ credencial.id }}">{{ credencial.titulo }}</option>
+                        {% endfor %}
+                    </select>
+                    <i data-feather="database" class="icon"></i>
+                </div>
+            </div>
+            
+            <button type="submit" id="submit-button" class="btn-submit">
+                <span id="button-text">Executar Processamento</span>
+                <div id="spinner" class="spinner" style="display: none;"></div>
+            </button>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        // Inicializa os ícones do Feather
+        feather.replace();
+
+        // Lógica do formulário (AJAX, etc.)
+        $(document).ready(function() {
+            // 1. Inicializa o Select2 com placeholders e tema customizado
+            $('.select2').each(function() {
+                const label = $(this).closest('.form-group').find('label').text();
+                $(this).select2({
+                    placeholder: "Selecione " + label.toLowerCase(),
+                    width: '100%',
+                    allowClear: true,
+                    dropdownParent: $(this).parent() // Garante que o dropdown renderize corretamente
+                });
+            });
+
+            // 2. Manipula o envio do formulário com AJAX
+            $('#process-form').on('submit', function(event) {
+                event.preventDefault();
+
+                const form = $(this);
+                const submitButton = $('#submit-button');
+                const buttonText = $('#button-text');
+                const spinner = $('#spinner');
+                const alertMessage = $('#alert-message');
+
+                // Validação
+                let isValid = true;
+                form.find('[required]').each(function() {
+                    if ($(this).val() === '' || $(this).val() === null) {
+                        isValid = false;
+                        // Destaca o campo inválido
+                        let fieldWrapper = $(this).closest('.input-wrapper').find('.form-control, .select2-selection--single');
+                        fieldWrapper.css('border-color', 'var(--error-color)');
+                    } else {
+                        let fieldWrapper = $(this).closest('.input-wrapper').find('.form-control, .select2-selection--single');
+                        fieldWrapper.css('border-color', 'var(--border-color)');
+                    }
+                });
+
+                if (!isValid) {
+                    alertMessage.text('Por favor, preencha todos os campos.').removeClass('alert-success').addClass('alert-error').fadeIn();
+                    return;
+                }
+
+                submitButton.prop('disabled', true);
+                buttonText.text('Processando...');
+                spinner.show();
+                alertMessage.fadeOut();
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: form.attr('method'),
+                    data: form.serialize(),
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success' && response.redirect_url) {
+                            // Redireciona para a página de detalhes
+                            window.location.href = response.redirect_url;
+                        } else {
+                            alertMessage.text(response.message).removeClass('alert-error').addClass('alert-success').fadeIn();
+                            form[0].reset();
+                            $('.select2').val(null).trigger('change');
+                            $('.form-control, .select2-selection--single').css('border-color', 'var(--border-color)');
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Ocorreu um erro inesperado no servidor.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        alertMessage.text(errorMessage).removeClass('alert-success').addClass('alert-error').fadeIn();
+                    },
+                    complete: function() {
+                        submitButton.prop('disabled', false);
+                        buttonText.text('Executar Processamento');
+                        spinner.hide();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

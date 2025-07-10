@@ -1,0 +1,530 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes da Execução | {{ execucao.titulo }}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+
+    <style>
+        /*-------------------------------------------*/
+        /* 1. ESTILOS BASE (COPIADOS DA PÁGINA ANTERIOR PARA CONSISTÊNCIA) */
+        /*-------------------------------------------*/
+        :root {
+            --bg-color: #0d1117;
+            --card-bg-color: rgba(22, 27, 34, 0.75);
+            --border-color: rgba(139, 148, 158, 0.3);
+            --primary-accent-color: #33a0ff;
+            --primary-glow-color: rgba(51, 160, 255, 0.5);
+            --success-color: #28a745;
+            --success-glow-color: rgba(40, 167, 69, 0.4);
+            --error-color: #f85149;
+            --error-glow-color: rgba(248, 81, 73, 0.4);
+            --warning-color: #ffab00;
+            --warning-glow-color: rgba(255, 171, 0, 0.4);
+            --text-color: #c9d1d9;
+            --text-secondary-color: #8b949e;
+            --border-radius: 8px;
+            --font-primary: 'Poppins', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-primary);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            background-image: 
+                linear-gradient(rgba(139, 148, 158, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 148, 158, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        
+        /*-------------------------------------------*/
+        /* 2. LAYOUT PRINCIPAL E CARDS               */
+        /*-------------------------------------------*/
+        .page-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card {
+            background: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 25px;
+            padding: 30px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /*-------------------------------------------*/
+        /* 3. DASHBOARD DE STATUS (CARD SUPERIOR)    */
+        /*-------------------------------------------*/
+        .summary-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .summary-header h2 { font-size: 1.5rem; color: #fff; }
+        
+        .status-badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        .status-pendente { background-color: var(--warning-color); color: #000; box-shadow: 0 0 10px var(--warning-glow-color); }
+        .status-executando { background-color: var(--primary-accent-color); color: #fff; box-shadow: 0 0 10px var(--primary-glow-color); }
+        .status-concluida { background-color: var(--success-color); color: #fff; box-shadow: 0 0 10px var(--success-glow-color); }
+        .status-erro { background-color: var(--error-color); color: #fff; box-shadow: 0 0 10px var(--error-glow-color); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background-color: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border-left: 4px solid;
+            transition: transform 0.2s ease;
+        }
+        .stat-card:hover { transform: translateY(-3px); }
+
+        .stat-card .label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--text-secondary-color); margin-bottom: 10px; }
+        .stat-card .value { font-size: 2rem; font-weight: 600; color: #fff; }
+        
+        .stat-sql { border-color: #9370db; } /* Roxo */
+        .stat-api { border-color: var(--primary-accent-color); } /* Azul */
+        .stat-success { border-color: var(--success-color); } /* Verde */
+        .stat-error { border-color: var(--error-color); } /* Vermelho */
+
+        /* Barra de Progresso */
+        .progress-container { margin-top: 25px; }
+        .progress-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-secondary-color); }
+        .progress-bar-bg { width: 100%; background-color: rgba(0,0,0,0.3); border-radius: 5px; height: 12px; overflow: hidden; }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-accent-color);
+            border-radius: 5px;
+            width: 0%; /* Inicia em 0, atualizado por JS */
+            transition: width 0.5s ease;
+        }
+
+        /*-------------------------------------------*/
+        /* 4. BOTÕES E LOGS                          */
+        /*-------------------------------------------*/
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-buttons button,
+        .action-buttons a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-family: var(--font-primary);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: var(--primary-accent-color);
+            color: #fff;
+        }
+        
+        .btn-danger {
+            background: var(--error-color);
+            color: #fff;
+        }
+        
+        .btn-warning {
+            background: var(--warning-color);
+            color: #000;
+        }
+        
+        .btn-primary:hover,
+        .btn-danger:hover,
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+        }
+        
+        .btn-primary:hover { box-shadow: 0 0 15px var(--primary-glow-color); }
+        .btn-danger:hover { box-shadow: 0 0 15px var(--error-glow-color); }
+        .btn-warning:hover { box-shadow: 0 0 15px var(--warning-glow-color); }
+        
+        .log-container {
+            background-color: rgba(0,0,0,0.3);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 25px;
+        }
+        .log-container pre {
+            font-family: var(--font-mono);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+            color: var(--text-secondary-color);
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-accent-color) var(--bg-color);
+        }
+        
+        /*-------------------------------------------*/
+        /* 5. TABELA DE RESULTADOS E PAGINAÇÃO       */
+        /*-------------------------------------------*/
+        .table-responsive { overflow-x: auto; }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .results-table th, .results-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .results-table th { color: var(--text-secondary-color); font-weight: 500; text-transform: uppercase; font-size: 0.8rem; }
+        .results-table td { color: var(--text-color); }
+        .results-table tr:last-child td { border-bottom: none; }
+        .results-table tr:hover { background-color: rgba(255,255,255,0.03); }
+
+        .status-icon { display: flex; align-items: center; gap: 8px; }
+        .status-icon .icon-success { color: var(--success-color); }
+        .status-icon .icon-error { color: var(--error-color); }
+        .error-details { font-family: var(--font-mono); font-size: 0.85rem; color: #ff9994; }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 30px;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 15px;
+            text-decoration: none;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-secondary-color);
+            transition: all 0.2s ease;
+        }
+        .pagination a:hover { background-color: var(--primary-accent-color); color: #fff; border-color: var(--primary-accent-color); }
+        .pagination .current { background-color: var(--primary-accent-color); color: #fff; border-color: var(--primary-accent-color); font-weight: 600; }
+
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+    <div class="page-header">
+        <h1>
+            <i data-feather="git-commit"></i>
+            <span>Execução #{{ execucao.id }}</span>
+        </h1>
+        <div class="action-buttons">
+            {% if execucao.status == 'executando' or execucao.status == 'pendente' %}
+            <button id="btn-cancelar" class="btn-danger" onclick="cancelarProcessamento()">
+                <i data-feather="x-circle"></i>
+                Cancelar
+            </button>
+            {% endif %}
+            
+            {% if execucao.status == 'concluida' or execucao.status == 'erro' %}
+            <button id="btn-reiniciar" class="btn-warning" onclick="reiniciarProcessamento()">
+                <i data-feather="refresh-cw"></i>
+                Reiniciar
+            </button>
+            {% endif %}
+            
+            <a href="{% url 'exportar_resultados_csv' execucao.id %}" class="btn-primary">
+                <i data-feather="download"></i>
+                Exportar CSV
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="summary-header">
+            <h2>{{ execucao.titulo }}</h2>
+            <span id="status-badge" class="status-badge status-{{ execucao.status }}">{{ execucao.get_status_display }}</span>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card stat-sql">
+                <div class="label"><i data-feather="align-left"></i> Registros SQL</div>
+                <div id="total-sql" class="value">{{ execucao.total_registros_sql|default:"0" }}</div>
+            </div>
+            <div class="stat-card stat-api">
+                <div class="label"><i data-feather="radio"></i> Consultas API</div>
+                <div id="total-api" class="value">{{ execucao.total_consultados_api|default:"0" }}</div>
+            </div>
+            <div class="stat-card stat-success">
+                <div class="label"><i data-feather="check-circle"></i> Sucessos</div>
+                <div id="total-success" class="value">{{ execucao.total_consultados_api|default:"0" }}</div>
+            </div>
+             <div class="stat-card stat-error">
+                <div class="label"><i data-feather="x-circle"></i> Erros</div>
+                <div id="total-error" class="value">{{ execucao.total_erros|default:"0" }}</div>
+            </div>
+        </div>
+
+        {% if execucao.status == 'executando' or execucao.status == 'pendente' %}
+        <div id="progress-container" class="progress-container">
+            <div class="progress-label">
+                <span>Progresso</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if execucao.log_execucao %}
+        <div class="log-container">
+            <pre id="log-content">{{ execucao.log_execucao }}</pre>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Resultados Detalhados ({{ total_consultas }})</h2>
+        <div class="table-responsive">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Status</th>
+                        <th>Data</th>
+                        <th>Detalhes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for consulta in page_obj %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'detalhes_cliente' consulta.cliente.id %}" style="color: var(--text-color); text-decoration: none;">
+                                <strong>{{ consulta.cliente.nome_razaosocial|default:"N/A" }}</strong><br>
+                                <small>Cód: {{ consulta.cliente.codigo_cliente }}</small>
+                            </a>
+                        </td>
+                        <td>
+                            {% if consulta.sucesso_api %}
+                                <span class="status-icon"><i data-feather="check-circle" class="icon-success"></i> Sucesso</span>
+                            {% else %}
+                                <span class="status-icon"><i data-feather="x-circle" class="icon-error"></i> Erro</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ consulta.data_consulta|date:"d/m/Y H:i:s" }}</td>
+                        <td>
+                            {% if not consulta.sucesso_api and consulta.erro_api %}
+                                <span class="error-details">{{ consulta.erro_api }}</span>
+                            {% else %}
+                                <span style="color: var(--text-secondary-color);">Dados da API processados.</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-secondary-color);">
+                            Nenhum resultado detalhado para exibir ainda.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}"><i data-feather="arrow-left"></i></a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="current">{{ num }}</span>
+                {% else %}
+                    <a href="?page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}"><i data-feather="arrow-right"></i></a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<script>
+    // Inicializa os ícones
+    feather.replace();
+
+    // Lógica para atualização em tempo real
+    document.addEventListener('DOMContentLoaded', function() {
+        const status = "{{ execucao.status }}";
+        const execucaoId = "{{ execucao.id }}";
+        
+        // Se a execução não está finalizada, inicia o polling
+        if (status === 'executando' || status === 'pendente') {
+            const intervalId = setInterval(atualizarStatus, 3000); // Verifica a cada 3 segundos
+
+            function atualizarStatus() {
+                fetch(`{% url 'status_execucao_ajax' execucao_id=execucao.id %}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Atualiza os cards de estatísticas
+                        document.getElementById('total-sql').textContent = data.total_registros_sql || '0';
+                        document.getElementById('total-api').textContent = data.total_consultados_api || '0';
+                        document.getElementById('total-success').textContent = data.total_consultados_api || '0';
+                        document.getElementById('total-error').textContent = data.total_erros || '0';
+
+                        // Atualiza o log
+                        const logContent = document.getElementById('log-content');
+                        if(logContent) logContent.textContent = data.log_execucao;
+
+                        // Atualiza a barra de progresso
+                        const progressBar = document.getElementById('progress-bar');
+                        const progressPercent = document.getElementById('progress-percent');
+                        if(progressBar && data.total_registros_sql > 0) {
+                            const totalConsultas = (data.total_consultados_api || 0) + (data.total_erros || 0);
+                            const percent = Math.round((totalConsultas / data.total_registros_sql) * 100);
+                            progressBar.style.width = percent + '%';
+                            progressPercent.textContent = percent + '%';
+                        }
+                        
+                        // Verifica se a execução terminou
+                        if (data.status === 'concluida' || data.status === 'erro') {
+                            clearInterval(intervalId); // Para de verificar
+                            // Recarrega a página para exibir o estado final completo (incluindo paginação e resultados)
+                            window.location.reload(); 
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao buscar status:', error);
+                        clearInterval(intervalId); // Para em caso de erro de rede
+                    });
+            }
+
+            // Chama uma vez no início para não esperar os 3 primeiros segundos
+            atualizarStatus();
+        }
+    });
+
+    // Função para cancelar o processamento
+    function cancelarProcessamento() {
+        if (!confirm('Tem certeza que deseja cancelar o processamento?')) {
+            return;
+        }
+        
+        fetch(`{% url 'cancelar_processamento' execucao_id=execucao.id %}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erro ao cancelar processamento');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao cancelar processamento');
+        });
+    }
+
+    // Função para reiniciar o processamento
+    function reiniciarProcessamento() {
+        if (!confirm('Tem certeza que deseja reiniciar o processamento?')) {
+            return;
+        }
+        
+        fetch(`{% url 'reiniciar_processamento' execucao_id=execucao.id %}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erro ao reiniciar processamento');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao reiniciar processamento');
+        });
+    }
+
+    // Função auxiliar para obter o token CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+</body>
+</html>

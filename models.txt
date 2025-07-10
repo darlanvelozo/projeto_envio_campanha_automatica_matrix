@@ -1,0 +1,60 @@
+from django.db import models
+
+# Create your models here.
+
+class TemplateSQL(models.Model):
+    consulta_sql = models.TextField()
+    titulo = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.titulo
+
+class CredenciaisHubsoft(models.Model):
+    titulo = models.CharField(max_length=100, verbose_name="Título")
+    client_id = models.CharField(max_length=100, verbose_name="Client ID")
+    client_secret = models.CharField(max_length=100, verbose_name="Client Secret")
+    username = models.EmailField(verbose_name="Username")
+    password = models.CharField(max_length=100, verbose_name="Password")
+    url_base = models.URLField(verbose_name="URL Base")
+    url_token = models.URLField(verbose_name="URL Token")
+    data_criacao = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
+
+    class Meta:
+        verbose_name = "Credencial Hubsoft"
+        verbose_name_plural = "Credenciais Hubsoft"
+
+    def __str__(self):
+        return f"{self.titulo} - {self.username}"
+
+class ClienteConsultado(models.Model):
+    codigo_cliente = models.CharField(max_length=50, verbose_name="Código do Cliente")
+    nome_razaosocial = models.CharField(max_length=255, verbose_name="Nome/Razão Social")
+    telefone_corrigido = models.CharField(max_length=20, verbose_name="Telefone Corrigido")
+    id_fatura = models.CharField(max_length=50, verbose_name="ID da Fatura", null=True, blank=True)
+    vencimento_fatura = models.DateField(verbose_name="Vencimento da Fatura", null=True, blank=True)
+    valor_fatura = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor da Fatura", null=True, blank=True)
+    pix = models.CharField(max_length=255, verbose_name="Código PIX", null=True, blank=True)
+    codigo_barras = models.CharField(max_length=255, verbose_name="Código de Barras", null=True, blank=True)
+    link_boleto = models.URLField(verbose_name="Link do Boleto", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Cliente Consultado"
+        verbose_name_plural = "Clientes Consultados"
+
+    def __str__(self):
+        return f"{self.codigo_cliente} - {self.nome_razaosocial}"
+
+class ConsultaCliente(models.Model):
+    titulo = models.CharField(max_length=255, verbose_name="Título da Consulta")
+    template_sql = models.ForeignKey(TemplateSQL, on_delete=models.CASCADE, verbose_name="Template SQL")
+    cliente = models.ForeignKey(ClienteConsultado, on_delete=models.CASCADE, verbose_name="Cliente")
+    data_consulta = models.DateTimeField(auto_now_add=True, verbose_name="Data da Consulta")
+
+    class Meta:
+        verbose_name = "Consulta de Cliente"
+        verbose_name_plural = "Consultas de Clientes"
+        ordering = ['-data_consulta']
+
+    def __str__(self):
+        return f"{self.titulo} - {self.cliente.nome_razaosocial} ({self.data_consulta.strftime('%d/%m/%Y %H:%M')})"

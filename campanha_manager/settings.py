@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-z2r1356f=+co1=c@*55%*08rzl=@63y4cg%f=l8jzkb9-zb@i3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -75,8 +75,12 @@ WSGI_APPLICATION = 'campanha_manager.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'bd_campanha_automatica',
+        'USER': 'admin',
+        'PASSWORD': 'qualidade@trunks.57',
+        'HOST': '187.62.153.52',
+        'PORT': '5432',
     }
 }
 
@@ -103,9 +107,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pt-br'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 
@@ -115,7 +119,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Configurações para lidar com grandes volumes de dados
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000  # Aumenta o limite de campos (padrão é 1000)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB (padrão é 2.5MB)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

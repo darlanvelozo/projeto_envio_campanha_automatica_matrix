@@ -106,6 +106,7 @@
         .status-executando { background-color: var(--primary-accent-color); color: #fff; box-shadow: 0 0 10px var(--primary-glow-color); }
         .status-concluida { background-color: var(--success-color); color: #fff; box-shadow: 0 0 10px var(--success-glow-color); }
         .status-erro { background-color: var(--error-color); color: #fff; box-shadow: 0 0 10px var(--error-glow-color); }
+        .status-cancelada { background-color: #6c757d; color: #fff; box-shadow: 0 0 10px rgba(108, 117, 125, 0.4); }
 
         .stats-grid {
             display: grid;
@@ -151,18 +152,26 @@
             gap: 10px;
         }
         
+        .export-dropdown {
+            display: flex;
+            gap: 8px;
+        }
+        
         .action-buttons button,
         .action-buttons a {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 18px;
+            padding: 8px 16px;
             border: none;
             border-radius: var(--border-radius);
             cursor: pointer;
             font-family: var(--font-primary);
             font-weight: 500;
+            font-size: 0.9rem;
+            line-height: 1.2;
             transition: all 0.2s ease;
+            text-decoration: none;
         }
         
         .btn-primary {
@@ -275,10 +284,71 @@
             </button>
             {% endif %}
             
-            <a href="{% url 'exportar_resultados_csv' execucao.id %}" class="btn-primary">
-                <i data-feather="download"></i>
-                Exportar CSV
-            </a>
+            <div class="export-dropdown">
+                <a href="{% url 'exportar_resultados_csv' execucao.id %}" class="btn-primary">
+                    <i data-feather="download"></i>
+                    Exportar Sucessos
+                </a>
+                <a href="{% url 'exportar_resultados_csv' execucao.id %}?incluir_erros=true" class="btn-warning">
+                    <i data-feather="download"></i>
+                    Exportar Completo
+                </a>
+                <a href="{% url 'exportar_erros_csv' execucao.id %}" class="btn-danger">
+                    <i data-feather="download"></i>
+                    Exportar Erros
+                </a>
+            </div>
+            
+            {% if execucao.status == 'concluida' %}
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                <h3 style="color: var(--primary-accent-color); margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <i data-feather="send"></i>
+                    Envio de HSM via Matrix
+                </h3>
+                <p style="color: var(--text-secondary-color); margin-bottom: 15px;">
+                    Envie mensagens HSM via API Matrix para todos os clientes com dados válidos desta execução.
+                </p>
+                
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <a href="{% url 'configurar_envio_hsm' execucao.id %}" class="btn-primary" 
+                       style="background: linear-gradient(135deg, #28a745, #20c997); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); padding: 8px 16px; font-size: 0.9rem; line-height: 1.2; text-decoration: none;">
+                        <i data-feather="settings"></i>
+                        Configurar Envio HSM
+                    </a>
+                    
+                    {% if ultimo_envio_hsm %}
+                    <button id="btnEnviarAtual" class="btn-primary" 
+                            style="background: linear-gradient(135deg, #007bff, #0056b3); box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4); padding: 8px 16px; font-size: 0.9rem; line-height: 1.2;">
+                        <i data-feather="repeat"></i>
+                        Enviar com Configurações Atuais
+                    </button>
+                    {% endif %}
+                </div>
+                
+                {% if ultimo_envio_hsm %}
+                <div style="margin-top: 15px; padding: 15px; background: rgba(0, 123, 255, 0.1); border: 1px solid rgba(0, 123, 255, 0.3); border-radius: 8px;">
+                    <h4 style="color: var(--text-color); margin-bottom: 10px; font-size: 0.9rem;">
+                        <i data-feather="info"></i>
+                        Última Configuração Utilizada:
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 0.85rem;">
+                        <div>
+                            <strong>Template:</strong> {{ ultimo_envio_hsm.hsm_template.nome }}
+                        </div>
+                        <div>
+                            <strong>API Matrix:</strong> {{ ultimo_envio_hsm.matrix_api_config.nome }}
+                        </div>
+                        <div>
+                            <strong>Data do Envio:</strong> {{ ultimo_envio_hsm.data_criacao|date:"d/m/Y H:i" }}
+                        </div>
+                        <div>
+                            <strong>Status:</strong> {{ ultimo_envio_hsm.get_status_envio_display }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -401,6 +471,9 @@
     // Inicializa os ícones
     feather.replace();
 
+    // Variável global para controlar o polling
+    window.statusPollingInterval = null;
+
     // Lógica para atualização em tempo real
     document.addEventListener('DOMContentLoaded', function() {
         const status = "{{ execucao.status }}";
@@ -408,7 +481,7 @@
         
         // Se a execução não está finalizada, inicia o polling
         if (status === 'executando' || status === 'pendente') {
-            const intervalId = setInterval(atualizarStatus, 3000); // Verifica a cada 3 segundos
+            window.statusPollingInterval = setInterval(atualizarStatus, 3000); // Verifica a cada 3 segundos
 
             function atualizarStatus() {
                 fetch(`{% url 'status_execucao_ajax' execucao_id=execucao.id %}`)
@@ -422,6 +495,20 @@
                         document.getElementById('total-api').textContent = data.total_consultados_api || '0';
                         document.getElementById('total-success').textContent = data.total_consultados_api || '0';
                         document.getElementById('total-error').textContent = data.total_erros || '0';
+
+                        // Atualiza o status badge
+                        const statusBadge = document.getElementById('status-badge');
+                        if (statusBadge) {
+                            statusBadge.className = `status-badge status-${data.status}`;
+                            const statusDisplayMap = {
+                                'pendente': 'Pendente',
+                                'executando': 'Executando',
+                                'concluida': 'Concluída',
+                                'erro': 'Erro',
+                                'cancelada': 'Cancelada'
+                            };
+                            statusBadge.textContent = statusDisplayMap[data.status] || data.status;
+                        }
 
                         // Atualiza o log
                         const logContent = document.getElementById('log-content');
@@ -438,15 +525,19 @@
                         }
                         
                         // Verifica se a execução terminou
-                        if (data.status === 'concluida' || data.status === 'erro') {
-                            clearInterval(intervalId); // Para de verificar
+                        if (data.status === 'concluida' || data.status === 'erro' || data.status === 'cancelada') {
+                            clearInterval(window.statusPollingInterval); // Para de verificar
+                            window.statusPollingInterval = null;
                             // Recarrega a página para exibir o estado final completo (incluindo paginação e resultados)
-                            window.location.reload(); 
+                            setTimeout(() => window.location.reload(), 1000); // Pequeno delay para mostrar o status final
                         }
                     })
                     .catch(error => {
                         console.error('Erro ao buscar status:', error);
-                        clearInterval(intervalId); // Para em caso de erro de rede
+                        if (window.statusPollingInterval) {
+                            clearInterval(window.statusPollingInterval); // Para em caso de erro de rede
+                            window.statusPollingInterval = null;
+                        }
                     });
             }
 
@@ -457,8 +548,16 @@
 
     // Função para cancelar o processamento
     function cancelarProcessamento() {
-        if (!confirm('Tem certeza que deseja cancelar o processamento?')) {
+        if (!confirm('Tem certeza que deseja cancelar o processamento? Esta ação não pode ser desfeita.')) {
             return;
+        }
+        
+        // Desabilita o botão para evitar cliques múltiplos
+        const btnCancelar = document.getElementById('btn-cancelar');
+        if (btnCancelar) {
+            btnCancelar.disabled = true;
+            btnCancelar.innerHTML = '<i data-feather="loader"></i> Cancelando...';
+            feather.replace();
         }
         
         fetch(`{% url 'cancelar_processamento' execucao_id=execucao.id %}`, {
@@ -471,21 +570,46 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
+                // Para qualquer polling ativo
+                if (window.statusPollingInterval) {
+                    clearInterval(window.statusPollingInterval);
+                }
+                // Recarrega a página para mostrar o novo estado
                 window.location.reload();
             } else {
                 alert(data.message || 'Erro ao cancelar processamento');
+                // Reabilita o botão em caso de erro
+                if (btnCancelar) {
+                    btnCancelar.disabled = false;
+                    btnCancelar.innerHTML = '<i data-feather="x-circle"></i> Cancelar';
+                    feather.replace();
+                }
             }
         })
         .catch(error => {
             console.error('Erro:', error);
             alert('Erro ao cancelar processamento');
+            // Reabilita o botão em caso de erro
+            if (btnCancelar) {
+                btnCancelar.disabled = false;
+                btnCancelar.innerHTML = '<i data-feather="x-circle"></i> Cancelar';
+                feather.replace();
+            }
         });
     }
 
     // Função para reiniciar o processamento
     function reiniciarProcessamento() {
-        if (!confirm('Tem certeza que deseja reiniciar o processamento?')) {
+        if (!confirm('Tem certeza que deseja reiniciar o processamento? Isso irá apagar todos os resultados atuais e começar do zero.')) {
             return;
+        }
+        
+        // Desabilita o botão para evitar cliques múltiplos
+        const btnReiniciar = document.getElementById('btn-reiniciar');
+        if (btnReiniciar) {
+            btnReiniciar.disabled = true;
+            btnReiniciar.innerHTML = '<i data-feather="loader"></i> Reiniciando...';
+            feather.replace();
         }
         
         fetch(`{% url 'reiniciar_processamento' execucao_id=execucao.id %}`, {
@@ -498,14 +622,27 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
+                // Recarrega a página para mostrar o novo estado
                 window.location.reload();
             } else {
                 alert(data.message || 'Erro ao reiniciar processamento');
+                // Reabilita o botão em caso de erro
+                if (btnReiniciar) {
+                    btnReiniciar.disabled = false;
+                    btnReiniciar.innerHTML = '<i data-feather="refresh-cw"></i> Reiniciar';
+                    feather.replace();
+                }
             }
         })
         .catch(error => {
             console.error('Erro:', error);
             alert('Erro ao reiniciar processamento');
+            // Reabilita o botão em caso de erro
+            if (btnReiniciar) {
+                btnReiniciar.disabled = false;
+                btnReiniciar.innerHTML = '<i data-feather="refresh-cw"></i> Reiniciar';
+                feather.replace();
+            }
         });
     }
 
@@ -524,6 +661,67 @@
         }
         return cookieValue;
     }
+    
+    // Função para envio HSM com configurações atuais
+    {% if ultimo_envio_hsm %}
+    document.getElementById('btnEnviarAtual').addEventListener('click', function() {
+        // Solicita apenas o título do novo envio
+        const titulo = prompt('Digite o título para este novo envio HSM:', 'Reenvio HSM - ' + new Date().toLocaleDateString('pt-BR'));
+        
+        if (!titulo) {
+            return; // Usuário cancelou
+        }
+        
+        if (titulo.trim().length < 3) {
+            alert('O título deve ter pelo menos 3 caracteres.');
+            return;
+        }
+        
+        // Confirma o envio
+        if (!confirm('Confirma o envio HSM usando as mesmas configurações do último envio?\n\nTemplate: {{ ultimo_envio_hsm.hsm_template.nome }}\nAPI Matrix: {{ ultimo_envio_hsm.matrix_api_config.nome }}')) {
+            return;
+        }
+        
+        // Desabilita o botão
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<div style="width: 16px; height: 16px; border: 2px solid transparent; border-top: 2px solid white; border-radius: 50%; animation: spin 1s linear infinite;"></div> Enviando...';
+        
+        // Cria FormData
+        const formData = new FormData();
+        formData.append('titulo', titulo.trim());
+        
+        // Envia requisição
+        fetch('{% url "enviar_hsm_configuracao_atual" execucao.id %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                // Redireciona para a página de detalhes do envio
+                window.location.href = data.redirect_url;
+            } else {
+                alert(data.message || 'Erro ao iniciar envio HSM');
+                // Reabilita o botão
+                btn.disabled = false;
+                btn.innerHTML = '<i data-feather="repeat"></i> Enviar com Configurações Atuais';
+                feather.replace();
+            }
+        })
+        .catch(error => {
+            alert('Erro ao processar solicitação: ' + error.message);
+            // Reabilita o botão
+            btn.disabled = false;
+            btn.innerHTML = '<i data-feather="repeat"></i> Enviar com Configurações Atuais';
+            feather.replace();
+        });
+    });
+    {% endif %}
 </script>
 
 </body>

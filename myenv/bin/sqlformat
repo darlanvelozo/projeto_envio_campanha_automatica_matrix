@@ -1,4 +1,4 @@
-#!/home/darlan/projeto_envio_campanha_automatica/myenv/bin/python3
+#!/home/darlan/projetos_django/projeto_envio_campanha_automatica/projeto_envio_campanha_automatica_matrix/myenv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

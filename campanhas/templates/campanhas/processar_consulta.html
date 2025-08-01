@@ -231,6 +231,49 @@
         .alert-success { background-color: rgba(40, 167, 69, 0.2); border-color: var(--success-color); color: var(--success-color); }
         .alert-error { background-color: rgba(248, 81, 73, 0.2); border-color: var(--error-color); color: var(--error-color); }
 
+        /*-------------------------------------------*/
+        /* 7. ESTILIZAÇÃO DOS CAMPOS DE VARIÁVEIS    */
+        /*-------------------------------------------*/
+        .variavel-field {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(139, 148, 158, 0.05);
+            border: 1px solid rgba(139, 148, 158, 0.2);
+            border-radius: var(--border-radius);
+        }
+
+        .variavel-field label {
+            color: var(--text-color);
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .variavel-field input,
+        .variavel-field select {
+            width: 100%;
+            background: rgba(22, 27, 34, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 12px 15px;
+            color: var(--text-color);
+            font-family: var(--font-primary);
+            font-size: 0.95rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .variavel-field input:focus,
+        .variavel-field select:focus {
+            outline: none;
+            border-color: var(--primary-accent-color);
+            box-shadow: 0 0 10px rgba(51, 160, 255, 0.3);
+        }
+
+        .variavel-obrigatoria::after {
+            content: " *";
+            color: var(--error-color);
+        }
+
         @media (max-width: 768px) {
             body { align-items: flex-start; padding: 10px; }
             .form-container { padding: 25px; }
@@ -299,6 +342,17 @@
                     <i data-feather="database" class="icon"></i>
                 </div>
             </div>
+
+            <!-- Seção de Variáveis Dinâmicas -->
+            <div id="variaveis-container" style="display: none;">
+                <div class="form-group">
+                    <label style="color: var(--primary-accent-color); font-weight: 600; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <i data-feather="sliders" style="width: 18px; height: 18px;"></i>
+                        Parâmetros do Template
+                    </label>
+                    <div id="variaveis-fields"></div>
+                </div>
+            </div>
             
             <button type="submit" id="submit-button" class="btn-submit">
                 <span id="button-text">Executar Processamento</span>
@@ -326,7 +380,104 @@
                 });
             });
 
-            // 2. Manipula o envio do formulário com AJAX
+            // 2. Carrega variáveis quando template é selecionado
+            $('#template_sql').on('change', function() {
+                const templateId = $(this).val();
+                const variaveisContainer = $('#variaveis-container');
+                const variaveisFields = $('#variaveis-fields');
+
+                if (templateId) {
+                    // Faz requisição AJAX para obter as variáveis do template
+                    $.ajax({
+                        url: '{% url "obter_variaveis_template" 0 %}'.replace('0', templateId),
+                        type: 'GET',
+                        dataType: 'json',
+                        success: function(response) {
+                            console.log('Resposta da API:', response); // Debug
+                            if (response.status === 'success' && Object.keys(response.variaveis).length > 0) {
+                                // Limpa campos anteriores
+                                variaveisFields.empty();
+
+                                // Cria campos para cada variável
+                                $.each(response.variaveis, function(varName, config) {
+                                    console.log('Processando variável:', varName, config); // Debug
+                                    const fieldHtml = criarCampoVariavel(varName, config);
+                                    variaveisFields.append(fieldHtml);
+                                });
+
+                                variaveisContainer.fadeIn();
+                                feather.replace(); // Atualiza os ícones
+                            } else {
+                                variaveisContainer.fadeOut();
+                            }
+                        },
+                        error: function() {
+                            console.error('Erro ao carregar variáveis do template');
+                            variaveisContainer.fadeOut();
+                        }
+                    });
+                } else {
+                    variaveisContainer.fadeOut();
+                }
+            });
+
+            // 3. Função para criar campos de variável
+            function criarCampoVariavel(varName, config) {
+                const labelClass = config.obrigatorio ? 'variavel-obrigatoria' : '';
+                const requiredAttr = config.obrigatorio ? 'required' : '';
+                
+                let inputHtml = '';
+                
+                switch(config.tipo) {
+                    case 'text':
+                        inputHtml = `<input type="text" id="var_${varName}" name="var_${varName}" 
+                                     value="${config.valor_padrao || ''}" 
+                                     placeholder="Digite ${config.label.toLowerCase()}" ${requiredAttr}>`;
+                        break;
+                    case 'number':
+                        inputHtml = `<input type="number" id="var_${varName}" name="var_${varName}" 
+                                     value="${config.valor_padrao || ''}" 
+                                     placeholder="Digite ${config.label.toLowerCase()}" ${requiredAttr}>`;
+                        break;
+                    case 'date':
+                        inputHtml = `<input type="date" id="var_${varName}" name="var_${varName}" 
+                                     value="${config.valor_padrao || ''}" ${requiredAttr}>`;
+                        break;
+                    case 'datetime':
+                        inputHtml = `<input type="datetime-local" id="var_${varName}" name="var_${varName}" 
+                                     value="${config.valor_padrao || ''}" ${requiredAttr}>`;
+                        break;
+                    case 'select':
+                        console.log('Criando select para:', varName, 'Opções:', config.opcoes); // Debug
+                        let optionsHtml = '<option value="">Selecione...</option>';
+                        if (config.opcoes && Array.isArray(config.opcoes) && config.opcoes.length > 0) {
+                            console.log('Processando', config.opcoes.length, 'opções'); // Debug
+                            config.opcoes.forEach(function(opcao) {
+                                const selected = opcao === config.valor_padrao ? 'selected' : '';
+                                optionsHtml += `<option value="${opcao}" ${selected}>${opcao}</option>`;
+                                console.log('Adicionada opção:', opcao, 'Selected:', selected); // Debug
+                            });
+                        } else {
+                            console.log('Nenhuma opção encontrada ou opções inválidas'); // Debug
+                        }
+                        console.log('HTML final do select:', optionsHtml); // Debug
+                        inputHtml = `<select id="var_${varName}" name="var_${varName}" ${requiredAttr}>${optionsHtml}</select>`;
+                        break;
+                    default:
+                        inputHtml = `<input type="text" id="var_${varName}" name="var_${varName}" 
+                                     value="${config.valor_padrao || ''}" 
+                                     placeholder="Digite ${config.label.toLowerCase()}" ${requiredAttr}>`;
+                }
+
+                return `
+                    <div class="variavel-field">
+                        <label for="var_${varName}" class="${labelClass}">${config.label}</label>
+                        ${inputHtml}
+                    </div>
+                `;
+            }
+
+            // 4. Manipula o envio do formulário com AJAX
             $('#process-form').on('submit', function(event) {
                 event.preventDefault();
 

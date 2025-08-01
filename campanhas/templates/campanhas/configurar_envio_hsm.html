@@ -1,0 +1,677 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar Envio HSM | {{ execucao.titulo }}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+
+    <style>
+        /*-------------------------------------------*/
+        /* ESTILOS BASE */
+        /*-------------------------------------------*/
+        :root {
+            --bg-color: #0d1117;
+            --card-bg-color: rgba(22, 27, 34, 0.75);
+            --border-color: rgba(139, 148, 158, 0.3);
+            --primary-accent-color: #33a0ff;
+            --primary-glow-color: rgba(51, 160, 255, 0.5);
+            --success-color: #28a745;
+            --success-glow-color: rgba(40, 167, 69, 0.4);
+            --error-color: #f85149;
+            --error-glow-color: rgba(248, 81, 73, 0.4);
+            --warning-color: #ffab00;
+            --warning-glow-color: rgba(255, 171, 0, 0.4);
+            --text-color: #c9d1d9;
+            --text-secondary-color: #8b949e;
+            --border-radius: 8px;
+            --font-primary: 'Poppins', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-primary);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            background-image: 
+                linear-gradient(rgba(139, 148, 158, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 148, 158, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary-accent-color), #58a6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--text-secondary-color);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--primary-accent-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(13, 17, 23, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-color);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-accent-color);
+            box-shadow: 0 0 0 3px var(--primary-glow-color);
+        }
+
+        .info-section {
+            background: rgba(51, 160, 255, 0.1);
+            border: 1px solid rgba(51, 160, 255, 0.3);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-section h3 {
+            color: var(--primary-accent-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(139, 148, 158, 0.2);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: var(--text-secondary-color);
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .variables-section {
+            display: none;
+            background: rgba(255, 171, 0, 0.1);
+            border: 1px solid rgba(255, 171, 0, 0.3);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .variables-section.active {
+            display: block;
+        }
+
+        .variable-mapping {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: center;
+            padding: 15px;
+            background: rgba(13, 17, 23, 0.5);
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+        }
+
+        .variable-info {
+            font-family: var(--font-mono);
+        }
+
+        .variable-name {
+            font-weight: 700;
+            color: var(--warning-color);
+        }
+
+        .variable-description {
+            color: var(--text-secondary-color);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-accent-color), #58a6ff);
+            color: white;
+            box-shadow: 0 4px 15px var(--primary-glow-color);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--primary-glow-color);
+        }
+
+        .btn-secondary {
+            background: rgba(139, 148, 158, 0.2);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(139, 148, 158, 0.3);
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .loading.active {
+            display: inline-flex;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(40, 167, 69, 0.4);
+            color: var(--success-color);
+        }
+
+        .alert-error {
+            background: rgba(248, 81, 73, 0.2);
+            border: 1px solid rgba(248, 81, 73, 0.4);
+            color: var(--error-color);
+        }
+
+        .campo-opcoes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .campo-opcao {
+            background: rgba(13, 17, 23, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+        }
+
+        /* Seção de contingência - inicialmente oculta */
+        #variablesSectionContingencia {
+            display: none;
+            margin-top: 20px;
+        }
+
+        #variablesSectionContingencia.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 10px;
+            }
+            
+            .variable-mapping {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i data-feather="send"></i> Configurar Envio HSM</h1>
+            <p>Configure o envio de mensagens HSM via Matrix para os clientes da execução</p>
+        </div>
+
+        <!-- Informações da Execução -->
+        <div class="info-section">
+            <h3><i data-feather="database"></i> Informações da Execução</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Título:</span>
+                    <span class="info-value">{{ execucao.titulo }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">{{ execucao.get_status_display }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Total de Registros:</span>
+                    <span class="info-value">{{ execucao.total_registros_sql }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Clientes com Dados Válidos:</span>
+                    <span class="info-value">{{ clientes_sucesso }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Data de Execução:</span>
+                    <span class="info-value">{{ execucao.data_inicio|date:"d/m/Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de Configuração -->
+        <div class="card">
+            <h2><i data-feather="settings"></i> Configuração do Envio</h2>
+            
+            <form id="hsmForm">
+                <input type="hidden" name="execucao_id" value="{{ execucao.id }}">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="titulo">Título do Envio:</label>
+                    <input type="text" id="titulo" name="titulo" required 
+                           placeholder="Ex: Envio de cobranças - Janeiro 2025">
+                </div>
+
+                <div class="form-group">
+                    <label for="matrix_config">Configuração da API Matrix:</label>
+                    <select id="matrix_config" name="matrix_config" required>
+                        <option value="">Selecione uma configuração...</option>
+                        {% for config in matrix_configs %}
+                            <option value="{{ config.id }}">{{ config.nome }} - {{ config.base_url }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="hsm_template">Template HSM Principal:</label>
+                    <select id="hsm_template" name="hsm_template" required>
+                        <option value="">Selecione um template...</option>
+                        {% for template in hsm_templates %}
+                            <option value="{{ template.id }}">{{ template.nome }} (ID: {{ template.hsm_id }})</option>
+                        {% endfor %}
+                    </select>
+                    <small style="color: var(--text-secondary-color); margin-top: 5px; display: block;">
+                        Template usado quando todas as variáveis estão preenchidas
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="hsm_template_contingencia">Template HSM de Contingência (Opcional):</label>
+                    <select id="hsm_template_contingencia" name="hsm_template_contingencia">
+                        <option value="">Selecione um template alternativo...</option>
+                        {% for template in hsm_templates %}
+                            <option value="{{ template.id }}">{{ template.nome }} (ID: {{ template.hsm_id }})</option>
+                        {% endfor %}
+                    </select>
+                    <small style="color: var(--text-secondary-color); margin-top: 5px; display: block;">
+                        Template usado quando alguma variável do principal estiver vazia (ex: PIX não disponível)
+                    </small>
+                </div>
+
+                <!-- Seção de Mapeamento de Variáveis -->
+                <div id="variablesSection" class="variables-section">
+                    <h3><i data-feather="link"></i> Mapeamento de Variáveis</h3>
+                    <p style="margin-bottom: 20px; color: var(--text-secondary-color);">
+                        Configure como os dados dos clientes serão mapeados para as variáveis do template HSM:
+                    </p>
+                    
+                    <!-- Campos disponíveis dos clientes -->
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--primary-accent-color); margin-bottom: 10px;">Campos Disponíveis dos Clientes:</h4>
+                        <div class="campo-opcoes">
+                            <div class="campo-opcao">nome_cliente - Nome do cliente</div>
+                            <div class="campo-opcao">codigo_cliente - Código do cliente</div>
+                            <div class="campo-opcao">telefone - Telefone do cliente</div>
+                            <div class="campo-opcao">valor_fatura - Valor da fatura</div>
+                            <div class="campo-opcao">vencimento_fatura - Data de vencimento</div>
+                            <div class="campo-opcao">codigo_barras - Código de barras</div>
+                            <div class="campo-opcao">pix_copia_cola - PIX copia e cola</div>
+                            <div class="campo-opcao">link_boleto - Link do boleto</div>
+                            <div class="campo-opcao">id_fatura - ID da fatura</div>
+                        </div>
+                    </div>
+                    
+                    <div id="variableMappings">
+                        <!-- Mapeamentos serão inseridos aqui via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Seção de Mapeamento de Variáveis de Contingência -->
+                <div id="variablesSectionContingencia" class="variables-section" style="background: rgba(255, 171, 0, 0.1); border: 1px solid rgba(255, 171, 0, 0.3);">
+                    <h3><i data-feather="shield"></i> Mapeamento de Variáveis - Template Contingência</h3>
+                    <p style="margin-bottom: 20px; color: var(--text-secondary-color);">
+                        Configure como os dados dos clientes serão mapeados para as variáveis do template HSM de contingência:
+                    </p>
+                    
+                    <div id="variableMappingsContingencia">
+                        <!-- Mapeamentos de contingência serão inseridos aqui via JavaScript -->
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <a href="{% url 'detalhe_execucao' execucao.id %}" class="btn btn-secondary">
+                        <i data-feather="arrow-left"></i> Voltar
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span class="loading" id="loadingSpinner">
+                            <div class="spinner"></div>
+                        </span>
+                        <i data-feather="send" id="sendIcon"></i>
+                        Iniciar Envio HSM
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Inicializa os ícones Feather
+        feather.replace();
+
+        // Manipulador do formulário
+        document.getElementById('hsmForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const sendIcon = document.getElementById('sendIcon');
+            
+            // Mostra loading
+            submitBtn.disabled = true;
+            loadingSpinner.classList.add('active');
+            sendIcon.style.display = 'none';
+            
+            try {
+                const formData = new FormData(this);
+                const response = await fetch('{% url "iniciar_envio_hsm" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Redireciona para a página de detalhes do envio
+                    window.location.href = result.redirect_url;
+                } else {
+                    showAlert('error', result.message);
+                }
+                
+            } catch (error) {
+                showAlert('error', 'Erro ao processar solicitação: ' + error.message);
+            } finally {
+                // Esconde loading
+                submitBtn.disabled = false;
+                loadingSpinner.classList.remove('active');
+                sendIcon.style.display = 'inline';
+            }
+        });
+
+        // Manipulador de mudança do template HSM
+        document.getElementById('hsm_template').addEventListener('change', async function() {
+            const templateId = this.value;
+            const variablesSection = document.getElementById('variablesSection');
+            const variableMappings = document.getElementById('variableMappings');
+            
+            if (!templateId) {
+                variablesSection.classList.remove('active');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/hsm-template/' + templateId + '/variaveis/');
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Limpa mapeamentos anteriores
+                    variableMappings.innerHTML = '';
+                    
+                    // Se o template tem variáveis, mostra a seção
+                    if (Object.keys(result.variaveis).length > 0) {
+                        variablesSection.classList.add('active');
+                        
+                        // Cria campos de mapeamento para cada variável
+                        for (const [varId, varDesc] of Object.entries(result.variaveis)) {
+                            const mappingDiv = document.createElement('div');
+                            mappingDiv.className = 'variable-mapping';
+                            mappingDiv.innerHTML = 
+                                '<div class="variable-info">' +
+                                    '<div class="variable-name">{{' + varId + '}}</div>' +
+                                    '<div class="variable-description">' + varDesc + '</div>' +
+                                '</div>' +
+                                '<div class="form-group" style="margin: 0;">' +
+                                    '<select name="var_mapping_' + varId + '" required>' +
+                                        '<option value="">Selecione um campo...</option>' +
+                                        '<option value="nome_cliente">Nome do Cliente</option>' +
+                                        '<option value="codigo_cliente">Código do Cliente</option>' +
+                                        '<option value="telefone">Telefone</option>' +
+                                        '<option value="valor_fatura">Valor da Fatura</option>' +
+                                        '<option value="vencimento_fatura">Data de Vencimento</option>' +
+                                        '<option value="codigo_barras">Código de Barras</option>' +
+                                        '<option value="pix_copia_cola">PIX Copia e Cola</option>' +
+                                        '<option value="link_boleto">Link do Boleto</option>' +
+                                        '<option value="id_fatura">ID da Fatura</option>' +
+                                    '</select>' +
+                                '</div>';
+                            variableMappings.appendChild(mappingDiv);
+                        }
+                    } else {
+                        variablesSection.classList.remove('active');
+                    }
+                } else {
+                    showAlert('error', result.message);
+                }
+                
+            } catch (error) {
+                showAlert('error', 'Erro ao carregar variáveis do template: ' + error.message);
+            }
+        });
+
+        // Manipulador de mudança do template HSM de contingência
+        document.getElementById('hsm_template_contingencia').addEventListener('change', async function() {
+            const templateId = this.value;
+            const variablesSectionContingencia = document.getElementById('variablesSectionContingencia');
+            const variableMappingsContingencia = document.getElementById('variableMappingsContingencia');
+            
+            if (!templateId) {
+                variablesSectionContingencia.classList.remove('active');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/hsm-template/' + templateId + '/variaveis/');
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Limpa mapeamentos anteriores
+                    variableMappingsContingencia.innerHTML = '';
+                    
+                    // Se o template tem variáveis, mostra a seção
+                    if (Object.keys(result.variaveis).length > 0) {
+                        variablesSectionContingencia.classList.add('active');
+                        
+                        // Cria campos de mapeamento para cada variável
+                        for (const [varId, varDesc] of Object.entries(result.variaveis)) {
+                            const mappingDiv = document.createElement('div');
+                            mappingDiv.className = 'variable-mapping';
+                            mappingDiv.innerHTML = 
+                                '<div class="variable-info">' +
+                                    '<div class="variable-name">{{' + varId + '}}</div>' +
+                                    '<div class="variable-description">' + varDesc + '</div>' +
+                                '</div>' +
+                                '<div class="form-group" style="margin: 0;">' +
+                                    '<select name="var_mapping_contingencia_' + varId + '" required>' +
+                                        '<option value="">Selecione um campo...</option>' +
+                                        '<option value="nome_cliente">Nome do Cliente</option>' +
+                                        '<option value="codigo_cliente">Código do Cliente</option>' +
+                                        '<option value="telefone">Telefone</option>' +
+                                        '<option value="valor_fatura">Valor da Fatura</option>' +
+                                        '<option value="vencimento_fatura">Data de Vencimento</option>' +
+                                        '<option value="codigo_barras">Código de Barras</option>' +
+                                        '<option value="pix_copia_cola">PIX Copia e Cola</option>' +
+                                        '<option value="link_boleto">Link do Boleto</option>' +
+                                        '<option value="id_fatura">ID da Fatura</option>' +
+                                    '</select>' +
+                                '</div>';
+                            variableMappingsContingencia.appendChild(mappingDiv);
+                        }
+                    } else {
+                        variablesSectionContingencia.classList.remove('active');
+                    }
+                } else {
+                    showAlert('error', result.message);
+                }
+                
+            } catch (error) {
+                showAlert('error', 'Erro ao carregar variáveis do template de contingência: ' + error.message);
+            }
+        });
+
+        // Função para mostrar alertas
+        function showAlert(type, message) {
+            // Remove alertas existentes
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+            
+            // Cria novo alerta
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-' + type;
+            alert.innerHTML = 
+                '<i data-feather="' + (type === 'success' ? 'check-circle' : 'alert-circle') + '"></i>' +
+                message;
+            
+            // Insere no início do container
+            const container = document.querySelector('.container');
+            container.insertBefore(alert, container.firstChild);
+            
+            // Remove após 5 segundos
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+            
+            // Atualiza ícones
+            feather.replace();
+        }
+    </script>
+</body>
+</html>

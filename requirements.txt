@@ -4,3 +4,4 @@ mysql-connector-python>=8.0.0
 psycopg2-binary>=2.9.0
 pyodbc>=4.0.0
 requests>=2.31.0 
+gunicorn>=21.2.0 

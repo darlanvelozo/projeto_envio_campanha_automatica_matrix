@@ -1,0 +1,773 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Envio HSM | {{ envio.titulo }}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+
+    <style>
+        /*-------------------------------------------*/
+        /* ESTILOS BASE */
+        /*-------------------------------------------*/
+        :root {
+            --bg-color: #0d1117;
+            --card-bg-color: rgba(22, 27, 34, 0.75);
+            --border-color: rgba(139, 148, 158, 0.3);
+            --primary-accent-color: #33a0ff;
+            --primary-glow-color: rgba(51, 160, 255, 0.5);
+            --success-color: #28a745;
+            --success-glow-color: rgba(40, 167, 69, 0.4);
+            --error-color: #f85149;
+            --error-glow-color: rgba(248, 81, 73, 0.4);
+            --warning-color: #ffab00;
+            --warning-glow-color: rgba(255, 171, 0, 0.4);
+            --text-color: #c9d1d9;
+            --text-secondary-color: #8b949e;
+            --border-radius: 8px;
+            --font-primary: 'Poppins', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-primary);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            background-image: 
+                linear-gradient(rgba(139, 148, 158, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 148, 158, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary-accent-color), #58a6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--text-secondary-color);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--primary-accent-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: rgba(13, 17, 23, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .status-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-number {
+            font-size: 2.5rem;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .status-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-section {
+            margin-bottom: 30px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(139, 148, 158, 0.2);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-accent-color), #58a6ff);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(139, 148, 158, 0.2);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: var(--text-secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text-color);
+            text-align: right;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pendente {
+            background: rgba(139, 148, 158, 0.2);
+            color: var(--text-secondary-color);
+        }
+
+        .status-enviando {
+            background: rgba(255, 171, 0, 0.2);
+            color: var(--warning-color);
+        }
+
+        .status-concluido {
+            background: rgba(40, 167, 69, 0.2);
+            color: var(--success-color);
+        }
+
+        .status-cancelado,
+        .status-erro {
+            background: rgba(248, 81, 73, 0.2);
+            color: var(--error-color);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-accent-color), #58a6ff);
+            color: white;
+            box-shadow: 0 4px 15px var(--primary-glow-color);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--primary-glow-color);
+        }
+
+        .btn-secondary {
+            background: rgba(139, 148, 158, 0.2);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(139, 148, 158, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--error-color), #da3633);
+            color: white;
+            box-shadow: 0 4px 15px var(--error-glow-color);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--error-glow-color);
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .log-section {
+            background: rgba(13, 17, 23, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .log-content {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-secondary-color);
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid rgba(139, 148, 158, 0.2);
+        }
+
+        .table-container {
+            background: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table th {
+            background: rgba(13, 17, 23, 0.7);
+            font-weight: 600;
+            color: var(--primary-accent-color);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(51, 160, 255, 0.05);
+        }
+
+        .status-cell {
+            text-align: center;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .pagination a,
+        .pagination span {
+            padding: 10px 15px;
+            background: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .pagination a:hover {
+            background: rgba(51, 160, 255, 0.2);
+            border-color: var(--primary-accent-color);
+        }
+
+        .pagination .current {
+            background: var(--primary-accent-color);
+            border-color: var(--primary-accent-color);
+        }
+
+        .auto-refresh {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            z-index: 1000;
+        }
+
+        .auto-refresh.active {
+            background: rgba(40, 167, 69, 0.2);
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 10px;
+            }
+            
+            .status-section {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            .auto-refresh {
+                position: static;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Indicador de Auto-refresh -->
+        <div id="autoRefresh" class="auto-refresh">
+            <i data-feather="refresh-cw"></i>
+            <span id="refreshText">Auto-refresh desabilitado</span>
+        </div>
+
+        <div class="header">
+            <h1><i data-feather="send"></i> {{ envio.titulo }}</h1>
+            <p>Detalhes do envio HSM via Matrix</p>
+        </div>
+
+        <!-- Ações -->
+        <div class="actions">
+            <a href="{% url 'listar_envios_hsm' %}" class="btn btn-secondary">
+                <i data-feather="arrow-left"></i> Voltar aos Envios
+            </a>
+            
+            {% if envio.status_envio in 'pendente,enviando' %}
+            <button onclick="cancelarEnvio()" class="btn btn-danger">
+                <i data-feather="x-circle"></i> Cancelar Envio
+            </button>
+            {% endif %}
+            
+            <button onclick="toggleAutoRefresh()" class="btn btn-primary" id="refreshBtn">
+                <i data-feather="refresh-cw"></i> Habilitar Auto-refresh
+            </button>
+        </div>
+
+        <!-- Seção de Status -->
+        <div class="card">
+            <h2><i data-feather="activity"></i> Status do Envio</h2>
+            
+            <div class="status-section">
+                <div class="status-card">
+                    <span class="status-number" style="color: var(--primary-accent-color);">{{ envio.total_clientes }}</span>
+                    <div class="status-label">Total de Clientes</div>
+                </div>
+                <div class="status-card">
+                    <span class="status-number" style="color: var(--success-color);">{{ envio.total_enviados }}</span>
+                    <div class="status-label">Enviados</div>
+                </div>
+                <div class="status-card">
+                    <span class="status-number" style="color: var(--error-color);">{{ envio.total_erros }}</span>
+                    <div class="status-label">Erros</div>
+                </div>
+                <div class="status-card">
+                    <span class="status-number" style="color: var(--warning-color);">{{ envio.total_pendentes }}</span>
+                    <div class="status-label">Pendentes</div>
+                </div>
+            </div>
+
+            <!-- Barra de Progresso -->
+            {% if envio.total_clientes > 0 %}
+            <div class="progress-section">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ envio.get_progresso_percentual }}%;"></div>
+                </div>
+                <div class="progress-text">{{ envio.get_progresso_percentual }}% concluído</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Informações do Envio -->
+        <div class="card">
+            <h2><i data-feather="info"></i> Informações do Envio</h2>
+            <div class="info-grid">
+                <div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i data-feather="flag"></i> Status:
+                        </span>
+                        <span class="info-value">
+                            <span class="status-badge status-{{ envio.status_envio }}">
+                                {{ envio.get_status_envio_display }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i data-feather="message-square"></i> Template HSM:
+                        </span>
+                        <span class="info-value">{{ envio.hsm_template.nome }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i data-feather="hash"></i> ID do HSM:
+                        </span>
+                        <span class="info-value">{{ envio.hsm_template.hsm_id }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i data-feather="git-branch"></i> Flow ID:
+                        </span>
+                        <span class="info-value">{{ envio.hsm_template.cod_flow|default:"N/A" }}</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i data-feather="server"></i> Configuração API:
+                        </span>
+                        <span class="info-value">{{ envio.matrix_api_config.nome }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i data-feather="database"></i> Execução Origem:
+                        </span>
+                        <span class="info-value">
+                            <a href="{% url 'detalhe_execucao' envio.consulta_execucao.id %}" 
+                               style="color: var(--primary-accent-color); text-decoration: none;">
+                                {{ envio.consulta_execucao.titulo }}
+                            </a>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i data-feather="calendar"></i> Data de Criação:
+                        </span>
+                        <span class="info-value">{{ envio.data_criacao|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% if envio.data_inicio_envio %}
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i data-feather="play"></i> Início do Envio:
+                        </span>
+                        <span class="info-value">{{ envio.data_inicio_envio|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if envio.data_fim_envio %}
+                    <div class="info-item">
+                        <span class="info-label">
+                            <i data-feather="check-circle"></i> Fim do Envio:
+                        </span>
+                        <span class="info-value">{{ envio.data_fim_envio|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Log de Execução -->
+        {% if envio.log_execucao %}
+        <div class="card">
+            <h2><i data-feather="file-text"></i> Log de Execução</h2>
+            <div class="log-section">
+                <div class="log-content" id="logContent">{{ envio.log_execucao }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Lista de Envios Individuais -->
+        <div class="card">
+            <h2><i data-feather="list"></i> Envios Individuais ({{ total_envios }} total)</h2>
+            
+            {% if page_obj %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Telefone</th>
+                            <th>Status</th>
+                            <th>Data do Envio</th>
+                            <th>Tentativas</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for envio_individual in page_obj %}
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600;">{{ envio_individual.cliente.nome_razaosocial }}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary-color);">
+                                    Código: {{ envio_individual.cliente.codigo_cliente }}
+                                </div>
+                            </td>
+                            <td>{{ envio_individual.cliente.telefone_corrigido|default:"N/A" }}</td>
+                            <td class="status-cell">
+                                <span class="status-badge status-{{ envio_individual.status }}">
+                                    {{ envio_individual.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if envio_individual.data_envio %}
+                                    {{ envio_individual.data_envio|date:"d/m/Y H:i:s" }}
+                                {% else %}
+                                    <span style="color: var(--text-secondary-color);">Não enviado</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ envio_individual.tentativas }}</td>
+                            <td>
+                                {% if envio_individual.erro_detalhado %}
+                                <button onclick="mostrarErro('{{ envio_individual.erro_detalhado|escapejs }}')" 
+                                        class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;">
+                                    <i data-feather="alert-circle"></i> Ver Erro
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginação -->
+            {% if page_obj.has_other_pages %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; Primeira</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                {% endif %}
+
+                <span class="current">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">Próxima</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">Última &raquo;</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div style="text-align: center; padding: 40px; color: var(--text-secondary-color);">
+                <i data-feather="inbox" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                <h3>Nenhum envio individual encontrado</h3>
+                <p>Os envios individuais aparecerão aqui conforme forem processados.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Inicializa os ícones Feather
+        feather.replace();
+
+        let autoRefreshInterval = null;
+        let isAutoRefreshActive = false;
+
+        // Função para toggle do auto-refresh
+        function toggleAutoRefresh() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            const autoRefreshDiv = document.getElementById('autoRefresh');
+            const refreshText = document.getElementById('refreshText');
+            
+            if (isAutoRefreshActive) {
+                // Desabilita auto-refresh
+                clearInterval(autoRefreshInterval);
+                isAutoRefreshActive = false;
+                refreshBtn.innerHTML = '<i data-feather="refresh-cw"></i> Habilitar Auto-refresh';
+                autoRefreshDiv.classList.remove('active');
+                refreshText.textContent = 'Auto-refresh desabilitado';
+            } else {
+                // Habilita auto-refresh
+                autoRefreshInterval = setInterval(atualizarStatus, 5000); // 5 segundos
+                isAutoRefreshActive = true;
+                refreshBtn.innerHTML = '<i data-feather="square"></i> Desabilitar Auto-refresh';
+                autoRefreshDiv.classList.add('active');
+                refreshText.textContent = 'Auto-refresh ativo (5s)';
+            }
+            
+            feather.replace();
+        }
+
+        // Função para atualizar status via AJAX
+        async function atualizarStatus() {
+            try {
+                const response = await fetch(`{% url 'status_envio_hsm_ajax' envio.id %}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Atualiza números na página
+                    updateStatusNumbers(data);
+                    
+                    // Atualiza log se houver
+                    if (data.log_execucao) {
+                        const logContent = document.getElementById('logContent');
+                        if (logContent) {
+                            logContent.textContent = data.log_execucao;
+                            logContent.scrollTop = logContent.scrollHeight;
+                        }
+                    }
+                    
+                    // Se o envio foi finalizado, para o auto-refresh e recarrega
+                    if (data.status === 'concluido' || data.status === 'cancelado' || data.status === 'erro') {
+                        if (isAutoRefreshActive) {
+                            clearInterval(autoRefreshInterval);
+                            isAutoRefreshActive = false;
+                            setTimeout(() => location.reload(), 2000); // Recarrega após 2 segundos
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar status:', error);
+            }
+        }
+
+        // Função para atualizar os números na interface
+        function updateStatusNumbers(data) {
+            const statusNumbers = document.querySelectorAll('.status-number');
+            if (statusNumbers.length >= 4) {
+                statusNumbers[0].textContent = data.total_clientes || 0;
+                statusNumbers[1].textContent = data.total_enviados || 0;
+                statusNumbers[2].textContent = data.total_erros || 0;
+                statusNumbers[3].textContent = data.total_pendentes || 0;
+            }
+            
+            // Atualiza barra de progresso
+            const progressFill = document.querySelector('.progress-fill');
+            const progressText = document.querySelector('.progress-text');
+            if (progressFill && progressText) {
+                const progresso = data.progresso_percentual || 0;
+                progressFill.style.width = progresso + '%';
+                progressText.textContent = progresso + '% concluído';
+            }
+        }
+
+        // Função para cancelar envio
+        async function cancelarEnvio() {
+            if (!confirm('Tem certeza que deseja cancelar este envio?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`{% url 'cancelar_envio_hsm' envio.id %}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value || getCsrfToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    location.reload();
+                } else {
+                    alert('Erro ao cancelar envio: ' + result.message);
+                }
+
+            } catch (error) {
+                alert('Erro ao processar solicitação: ' + error.message);
+            }
+        }
+
+        // Função para mostrar detalhes do erro
+        function mostrarErro(erro) {
+            alert('Erro detalhado:\n\n' + erro);
+        }
+
+        // Função auxiliar para obter CSRF token
+        function getCsrfToken() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    return value;
+                }
+            }
+            return '';
+        }
+
+        // Auto-habilita refresh se o envio estiver em andamento
+        {% if envio.status_envio in 'pendente,enviando' %}
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(toggleAutoRefresh, 1000); // Inicia auto-refresh após 1 segundo
+        });
+        {% endif %}
+    </script>
+</body>
+</html>

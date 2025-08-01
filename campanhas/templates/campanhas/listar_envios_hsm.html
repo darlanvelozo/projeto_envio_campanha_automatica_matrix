@@ -1,0 +1,524 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envios HSM | Matrix</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+
+    <style>
+        /*-------------------------------------------*/
+        /* ESTILOS BASE */
+        /*-------------------------------------------*/
+        :root {
+            --bg-color: #0d1117;
+            --card-bg-color: rgba(22, 27, 34, 0.75);
+            --border-color: rgba(139, 148, 158, 0.3);
+            --primary-accent-color: #33a0ff;
+            --primary-glow-color: rgba(51, 160, 255, 0.5);
+            --success-color: #28a745;
+            --success-glow-color: rgba(40, 167, 69, 0.4);
+            --error-color: #f85149;
+            --error-glow-color: rgba(248, 81, 73, 0.4);
+            --warning-color: #ffab00;
+            --warning-glow-color: rgba(255, 171, 0, 0.4);
+            --text-color: #c9d1d9;
+            --text-secondary-color: #8b949e;
+            --border-radius: 8px;
+            --font-primary: 'Poppins', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-primary);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            background-image: 
+                linear-gradient(rgba(139, 148, 158, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 148, 158, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary-accent-color), #58a6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--text-secondary-color);
+            font-size: 1.1rem;
+        }
+
+        .actions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-accent-color), #58a6ff);
+            color: white;
+            box-shadow: 0 4px 15px var(--primary-glow-color);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--primary-glow-color);
+        }
+
+        .btn-secondary {
+            background: rgba(139, 148, 158, 0.2);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(139, 148, 158, 0.3);
+        }
+
+        .envios-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .envio-card {
+            background: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .envio-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .envio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .envio-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 5px;
+        }
+
+        .envio-subtitle {
+            color: var(--text-secondary-color);
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pendente {
+            background: rgba(139, 148, 158, 0.2);
+            color: var(--text-secondary-color);
+        }
+
+        .status-enviando {
+            background: rgba(255, 171, 0, 0.2);
+            color: var(--warning-color);
+        }
+
+        .status-concluido {
+            background: rgba(40, 167, 69, 0.2);
+            color: var(--success-color);
+        }
+
+        .status-cancelado,
+        .status-erro {
+            background: rgba(248, 81, 73, 0.2);
+            color: var(--error-color);
+        }
+
+        .status-pausado {
+            background: rgba(139, 148, 158, 0.2);
+            color: var(--text-secondary-color);
+        }
+
+        .envio-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(13, 17, 23, 0.5);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-accent-color);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary-color);
+            margin-top: 5px;
+        }
+
+        .envio-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary-color);
+            font-size: 0.9rem;
+        }
+
+        .info-item i {
+            color: var(--primary-accent-color);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(139, 148, 158, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-accent-color), #58a6ff);
+            transition: width 0.3s ease;
+        }
+
+        .envio-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 40px;
+        }
+
+        .pagination a,
+        .pagination span {
+            padding: 10px 15px;
+            background: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-color);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .pagination a:hover {
+            background: rgba(51, 160, 255, 0.2);
+            border-color: var(--primary-accent-color);
+        }
+
+        .pagination .current {
+            background: var(--primary-accent-color);
+            border-color: var(--primary-accent-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary-color);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 10px;
+            }
+            
+            .actions-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .envio-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .envio-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .envio-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i data-feather="send"></i> Envios HSM Matrix</h1>
+            <p>Gerencie todos os envios de mensagens HSM realizados via API Matrix</p>
+        </div>
+
+        <div class="actions-header">
+            <div>
+                <a href="{% url 'listar_execucoes' %}" class="btn btn-secondary">
+                    <i data-feather="database"></i> Ver Execuções
+                </a>
+            </div>
+        </div>
+
+        {% if page_obj %}
+            <div class="envios-grid">
+                {% for envio in page_obj %}
+                <div class="envio-card">
+                    <div class="envio-header">
+                        <div>
+                            <div class="envio-title">{{ envio.titulo }}</div>
+                            <div class="envio-subtitle">
+                                Criado em {{ envio.data_criacao|date:"d/m/Y H:i" }}
+                            </div>
+                        </div>
+                        <div class="status-badge status-{{ envio.status_envio }}">
+                            {{ envio.get_status_envio_display }}
+                        </div>
+                    </div>
+
+                    <!-- Barra de Progresso -->
+                    {% if envio.total_clientes > 0 %}
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ envio.get_progresso_percentual }}%;"></div>
+                    </div>
+                    <div style="text-align: center; font-size: 0.9rem; color: var(--text-secondary-color); margin-bottom: 20px;">
+                        {{ envio.get_progresso_percentual }}% concluído
+                    </div>
+                    {% endif %}
+
+                    <!-- Estatísticas -->
+                    <div class="envio-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ envio.total_clientes }}</span>
+                            <div class="stat-label">Total</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" style="color: var(--success-color);">{{ envio.total_enviados }}</span>
+                            <div class="stat-label">Enviados</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" style="color: var(--error-color);">{{ envio.total_erros }}</span>
+                            <div class="stat-label">Erros</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" style="color: var(--warning-color);">{{ envio.total_pendentes }}</span>
+                            <div class="stat-label">Pendentes</div>
+                        </div>
+                    </div>
+
+                    <!-- Informações -->
+                    <div class="envio-info">
+                        <div class="info-item">
+                            <i data-feather="message-square"></i>
+                            HSM: {{ envio.hsm_template.nome }}
+                        </div>
+                        <div class="info-item">
+                            <i data-feather="server"></i>
+                            API: {{ envio.matrix_api_config.nome }}
+                        </div>
+                        <div class="info-item">
+                            <i data-feather="database"></i>
+                            Execução: {{ envio.consulta_execucao.titulo }}
+                        </div>
+                        {% if envio.data_inicio_envio %}
+                        <div class="info-item">
+                            <i data-feather="clock"></i>
+                            Iniciado: {{ envio.data_inicio_envio|date:"d/m/Y H:i" }}
+                        </div>
+                        {% endif %}
+                        {% if envio.data_fim_envio %}
+                        <div class="info-item">
+                            <i data-feather="check-circle"></i>
+                            Finalizado: {{ envio.data_fim_envio|date:"d/m/Y H:i" }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Ações -->
+                    <div class="envio-actions">
+                        <a href="{% url 'detalhe_envio_hsm' envio.id %}" class="btn btn-primary btn-sm">
+                            <i data-feather="eye"></i> Ver Detalhes
+                        </a>
+                        
+                        {% if envio.status_envio in 'pendente,enviando' %}
+                        <button onclick="cancelarEnvio({{ envio.id }})" class="btn btn-secondary btn-sm">
+                            <i data-feather="x-circle"></i> Cancelar
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Paginação -->
+            {% if page_obj.has_other_pages %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; Primeira</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                {% endif %}
+
+                <span class="current">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">Próxima</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">Última &raquo;</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        {% else %}
+            <div class="empty-state">
+                <i data-feather="send"></i>
+                <h3>Nenhum envio HSM encontrado</h3>
+                <p>Quando você criar envios HSM, eles aparecerão aqui.</p>
+                <div style="margin-top: 30px;">
+                    <a href="{% url 'listar_execucoes' %}" class="btn btn-primary">
+                        <i data-feather="database"></i> Ver Execuções para Criar Envios
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Inicializa os ícones Feather
+        feather.replace();
+
+        // Função para cancelar envio
+        async function cancelarEnvio(envioId) {
+            if (!confirm('Tem certeza que deseja cancelar este envio?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/envio-hsm/${envioId}/cancelar/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value || getCsrfToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    location.reload();
+                } else {
+                    alert('Erro ao cancelar envio: ' + result.message);
+                }
+
+            } catch (error) {
+                alert('Erro ao processar solicitação: ' + error.message);
+            }
+        }
+
+        // Função auxiliar para obter CSRF token
+        function getCsrfToken() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    return value;
+                }
+            }
+            return '';
+        }
+    </script>
+</body>
+</html>

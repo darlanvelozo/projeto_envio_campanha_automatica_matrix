@@ -211,10 +211,17 @@
             <i data-feather="list"></i>
             <span>Histórico de Execuções</span>
         </h1>
-        <a href="{% url 'pagina_processar_consulta' %}" class="action-button">
-            <i data-feather="plus"></i>
-            Nova Execução
-        </a>
+        <div style="display: flex; gap: 15px;">
+            <a href="{% url 'listar_envios_hsm' %}" class="action-button" 
+               style="background: linear-gradient(135deg, #28a745, #20c997); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);">
+                <i data-feather="send"></i>
+                Envios HSM
+            </a>
+            <a href="{% url 'pagina_processar_consulta' %}" class="action-button">
+                <i data-feather="plus"></i>
+                Nova Execução
+            </a>
+        </div>
     </div>
 
     <div class="card execution-list">
